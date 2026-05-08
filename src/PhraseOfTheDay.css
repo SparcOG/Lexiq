@@ -1,0 +1,289 @@
+/* PhraseOfTheDay — uses the global CSS variables from index.css.
+   Only adds gold-tinted overrides specific to this component. */
+
+.potd-banner {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid rgba(201, 168, 76, 0.25);
+  border-radius: 10px;
+  padding: 18px 22px 14px;
+  margin: 0 auto 28px;
+  max-width: 720px;
+  overflow: hidden;
+}
+
+/* Gold shimmer line at the top edge */
+.potd-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--gold) 30%,
+    rgba(255, 232, 160, 0.9) 50%,
+    var(--gold) 70%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: potd-shine 6s linear infinite;
+}
+
+@keyframes potd-shine {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@keyframes potd-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.potd-spin {
+  animation: potd-spin 1s linear infinite;
+}
+
+.potd-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+
+.potd-phrase-wrap {
+  margin: 0 0 6px;
+}
+
+.potd-phrase {
+  display: inline;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.35;
+  background: rgba(201, 168, 76, 0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.potd-meaning {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 10px 0 14px;
+}
+
+.potd-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+}
+
+.potd-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  padding: 0;
+  cursor: pointer;
+}
+
+.potd-toggle:hover {
+  opacity: 0.85;
+}
+
+.potd-chevron {
+  transition: transform 0.2s ease;
+}
+
+.potd-open .potd-chevron {
+  transform: rotate(180deg);
+}
+
+.potd-date {
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Expand panel — collapsed by default, no layout shift */
+.potd-deeper {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease, padding-top 0.25s ease;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 1px solid transparent;
+}
+
+.potd-open .potd-deeper {
+  max-height: 1000px;
+  opacity: 1;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.potd-section {
+  margin-bottom: 16px;
+}
+
+.potd-section:last-child {
+  margin-bottom: 0;
+}
+
+.potd-section-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 8px;
+  font-weight: 500;
+}
+
+.potd-examples {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.potd-examples li {
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.55;
+  padding: 6px 0 6px 12px;
+  border-left: 2px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.potd-chat-log {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.potd-chat-empty {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  margin: 4px 0 8px;
+  line-height: 1.5;
+}
+
+.potd-msg {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  margin-bottom: 8px;
+  max-width: 85%;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.potd-msg--user {
+  background: var(--accent);
+  color: #fff;
+  align-self: flex-end;
+}
+
+.potd-msg--assistant {
+  background: var(--border);
+  color: var(--text);
+  align-self: flex-start;
+}
+
+.potd-msg--loading {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.potd-error-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fca5a5;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.potd-chat-form {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.potd-chat-form input {
+  flex: 1;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  font-family: inherit;
+}
+
+.potd-chat-form input:focus {
+  border-color: var(--gold);
+}
+
+.potd-chat-form input::placeholder {
+  color: var(--muted);
+}
+
+.potd-chat-form button {
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.potd-chat-form button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.potd-chat-form button:not(:disabled):hover {
+  opacity: 0.88;
+}
+
+/* Loading & error states for the banner itself */
+.potd-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  padding: 6px 0;
+}
+
+.potd-banner--error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #fca5a5;
+  border-color: rgba(220, 38, 38, 0.3);
+}
