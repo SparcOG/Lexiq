@@ -28,6 +28,22 @@ async function apiLookup(word, level) {
   return res.json();
 }
 
+const CHAT_KEY = (word) => `lexiq:chat:${word.toLowerCase()}`;
+const CHAT_CAP = 40;
+
+function loadChat(word) {
+  try {
+    const raw = localStorage.getItem(CHAT_KEY(word));
+    return raw ? JSON.parse(raw) : [];
+  } catch { return []; }
+}
+
+function saveChat(word, messages) {
+  try {
+    localStorage.setItem(CHAT_KEY(word), JSON.stringify(messages.slice(-CHAT_CAP)));
+  } catch {}
+}
+
 async function apiChat(word, messages) {
   const res = await fetch('/api/chat', {
     method: 'POST',
@@ -188,7 +204,7 @@ export default function App() {
   async function doLookup(word, lvl) {
     setLoading(true);
     setError(null);
-    setChatMessages([]);
+    setChatMessages(loadChat(word));
     setChatError(null);
     try {
       const data = await apiLookup(word, lvl);
@@ -256,7 +272,11 @@ export default function App() {
     setChatError(null);
     try {
       const { reply } = await apiChat(wordData.word, newMessages);
-      setChatMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+      setChatMessages((prev) => {
+        const updated = [...prev, { role: 'assistant', content: reply }];
+        saveChat(wordData.word, updated);
+        return updated;
+      });
     } catch (err) {
       setChatError(err.message);
     } finally {
