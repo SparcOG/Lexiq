@@ -3,6 +3,7 @@ import {
   Search, Volume2, History, Eye, EyeOff, Loader2, Sparkles,
   BookOpen, Send, MessageCircle, AlertCircle,
 } from 'lucide-react';
+import { supabase } from './supabase.js';
 // -----------------------------------------------------------------------------
 // Lexiq — English learning tool
 // Uses Haiku for everything (cheap). Real API via /api/lookup and /api/chat.
@@ -28,34 +29,33 @@ async function apiLookup(word, level) {
   return res.json();
 }
 
-function getUserId() {
-  let id = localStorage.getItem('lexiq:userId');
-  if (!id) { id = crypto.randomUUID(); localStorage.setItem('lexiq:userId', id); }
-  return id;
+function authHeaders(token) {
+  return { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 }
 
-async function dbLoadHistory(userId) {
-  const r = await fetch(`/api/sync?action=load&userId=${userId}`);
+async function dbLoadHistory(token) {
+  const r = await fetch('/api/sync?action=load', { headers: authHeaders(token) });
   if (!r.ok) return null;
   const { words } = await r.json();
   return words;
 }
 
-function dbSaveHistory(userId, words) {
-  fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'save-history', userId, words }) }).catch(() => {});
+function dbSaveHistory(token, words) {
+  fetch('/api/sync', { method: 'POST', headers: authHeaders(token),
+    body: JSON.stringify({ action: 'save-history', words }) }).catch(() => {});
 }
 
-async function dbLoadChat(userId, word) {
-  const r = await fetch(`/api/sync?action=load-chat&userId=${userId}&word=${encodeURIComponent(word)}`);
+async function dbLoadChat(token, word) {
+  const r = await fetch(`/api/sync?action=load-chat&word=${encodeURIComponent(word)}`,
+    { headers: authHeaders(token) });
   if (!r.ok) return null;
   const { messages } = await r.json();
   return messages;
 }
 
-function dbSaveChat(userId, word, messages) {
-  fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'save-chat', userId, word, messages }) }).catch(() => {});
+function dbSaveChat(token, word, messages) {
+  fetch('/api/sync', { method: 'POST', headers: authHeaders(token),
+    body: JSON.stringify({ action: 'save-chat', word, messages }) }).catch(() => {});
 }
 
 const CHAT_KEY = (word) => `lexiq:chat:${word.toLowerCase()}`;
@@ -198,7 +198,13 @@ const styles = {
 };
 
 export default function App() {
-  const [userId] = useState(getUserId);
+  const [session, setSession] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authSent, setAuthSent] = useState(false);
+  const [authError, setAuthError] = useState(null);
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+
   const [input, setInput] = useState('');
   const [wordData, setWordData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -220,15 +226,27 @@ export default function App() {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, chatLoading]);
 
-  // Load history from DB on mount; DB is source of truth across devices.
   useEffect(() => {
-    dbLoadHistory(userId).then(words => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setAuthLoading(false);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    dbLoadHistory(session.access_token).then(words => {
       if (words?.length) {
         setHistory(words);
         localStorage.setItem('lexiq:history', JSON.stringify(words));
       }
     }).catch(() => {});
-  }, [userId]);
+  }, [session?.user?.id]);
 
   // Warm up speech voices on mount. Some browsers load them async,
   // so we trigger the load and listen for the voiceschanged event.
@@ -249,7 +267,7 @@ export default function App() {
     setError(null);
     setChatMessages(loadChat(word));
     setChatError(null);
-    dbLoadChat(userId, word).then(msgs => {
+    dbLoadChat(session.access_token, word).then(msgs => {
       if (msgs?.length) { setChatMessages(msgs); saveChat(word, msgs); }
     }).catch(() => {});
     try {
@@ -268,7 +286,7 @@ export default function App() {
       setHistory((h) => {
         const updated = [word, ...h.filter((w) => w.toLowerCase() !== word.toLowerCase())].slice(0, 20);
         try { localStorage.setItem('lexiq:history', JSON.stringify(updated)); } catch {}
-        dbSaveHistory(userId, updated);
+        dbSaveHistory(session.access_token, updated);
         return updated;
       });
     } catch (err) {
@@ -323,7 +341,7 @@ export default function App() {
       setChatMessages((prev) => {
         const updated = [...prev, { role: 'assistant', content: reply }];
         saveChat(wordData.word, updated);
-        dbSaveChat(userId, wordData.word, updated);
+        dbSaveChat(session.access_token, wordData.word, updated);
         return updated;
       });
     } catch (err) {
@@ -334,6 +352,63 @@ export default function App() {
   }
 
   const currentDefinition = wordData ? wordData.levels[level] : null;
+
+  async function sendMagicLink(e) {
+    e.preventDefault();
+    setAuthSubmitting(true);
+    setAuthError(null);
+    const { error } = await supabase.auth.signInWithOtp({
+      email: authEmail,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) setAuthError(error.message);
+    else setAuthSent(true);
+    setAuthSubmitting(false);
+  }
+
+  if (authLoading) return (
+    <div style={{ minHeight: '100vh', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Loader2 size={24} color={COLORS.textMuted} style={{ animation: 'spin 1s linear infinite' }} />
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+
+  if (!session) return (
+    <div style={{ minHeight: '100vh', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 360, padding: 40, background: COLORS.bgPanel, borderRadius: 12, border: `1px solid ${COLORS.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <Sparkles size={22} color={COLORS.blue} />
+          <h1 style={{ fontSize: 22, fontWeight: 600, margin: 0 }}>Lexiq</h1>
+        </div>
+        <p style={{ color: COLORS.textMuted, fontSize: 13, marginBottom: 28 }}>English learning tool</p>
+        {authSent ? (
+          <p style={{ color: COLORS.textDim, lineHeight: 1.7, fontSize: 14 }}>
+            Check your email — we sent a sign-in link to{' '}
+            <strong style={{ color: COLORS.text }}>{authEmail}</strong>.
+          </p>
+        ) : (
+          <form onSubmit={sendMagicLink}>
+            <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 16, lineHeight: 1.6 }}>
+              Sign in to sync your learning across devices.
+            </p>
+            <input
+              type="email"
+              value={authEmail}
+              onChange={e => setAuthEmail(e.target.value)}
+              placeholder="your@email.com"
+              required
+              style={{ ...styles.searchInput, display: 'block', width: '100%', marginBottom: 10, padding: '10px 14px', boxSizing: 'border-box' }}
+            />
+            {authError && <p style={{ color: '#fca5a5', fontSize: 13, marginBottom: 10 }}>{authError}</p>}
+            <button type="submit" disabled={authSubmitting} style={{ width: '100%', padding: '10px', background: COLORS.blueBg, color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: authSubmitting ? 0.6 : 1 }}>
+              {authSubmitting ? 'Sending…' : 'Send magic link'}
+            </button>
+          </form>
+        )}
+      </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
 
   return (
     <div style={styles.app}>
@@ -372,6 +447,9 @@ export default function App() {
           </form>
           <button onClick={() => setShowRussian((v) => !v)} style={styles.ruBtn} title={showRussian ? 'Hide Russian' : 'Show Russian'}>
             {showRussian ? <EyeOff size={14} /> : <Eye size={14} />} RU
+          </button>
+          <button onClick={() => supabase.auth.signOut()} style={{ ...styles.ruBtn, color: COLORS.textFaint }} title={session.user.email}>
+            Sign out
           </button>
         </header>
 

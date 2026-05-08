@@ -5,10 +5,22 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_KEY
 );
 
+async function getUser(req) {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!token) return null;
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return null;
+  return user;
+}
+
 export default async function handler(req, res) {
+  const user = await getUser(req);
+  if (!user) return res.status(401).json({ error: 'unauthorized' });
+  const userId = user.id;
+
   if (req.method === 'GET') {
-    const { action, userId, word } = req.query;
-    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const { action, word } = req.query;
 
     if (action === 'load') {
       const { data } = await supabase
@@ -34,14 +46,11 @@ export default async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
-    const { action, userId, words, word, messages } = req.body || {};
-    if (!userId) return res.status(400).json({ error: 'userId required' });
+    const { action, words, word, messages } = req.body || {};
 
     if (action === 'save-history') {
       await supabase.from('word_history').upsert({
-        user_id: userId,
-        words,
-        updated_at: new Date().toISOString(),
+        user_id: userId, words, updated_at: new Date().toISOString(),
       });
       return res.status(200).json({ ok: true });
     }
@@ -49,9 +58,7 @@ export default async function handler(req, res) {
     if (action === 'save-chat') {
       if (!word) return res.status(400).json({ error: 'word required' });
       await supabase.from('chat_history').upsert({
-        user_id: userId,
-        word: word.toLowerCase(),
-        messages,
+        user_id: userId, word: word.toLowerCase(), messages,
         updated_at: new Date().toISOString(),
       });
       return res.status(200).json({ ok: true });
