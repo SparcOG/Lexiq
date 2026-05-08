@@ -46,12 +46,22 @@ export default async function handler(req, res) {
     .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
     .map(m => ({ role: m.role, content: m.content }));
 
+  // Mark the last assistant message with cache_control so the growing
+  // conversation history is cached on each turn. Below 4096 tokens it's a
+  // no-op; above it gives ~10x cheaper reads on the cached prefix.
+  const lastAssistantIdx = [...clean].map(m => m.role).lastIndexOf('assistant');
+  const messagesWithCache = clean.map((m, i) =>
+    i === lastAssistantIdx
+      ? { ...m, content: [{ type: 'text', text: m.content, cache_control: { type: 'ephemeral' } }] }
+      : m
+  );
+
   try {
     const msg = await client.messages.create({
       model: MODEL,
       max_tokens,
-      system,
-      messages: clean,
+      system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
+      messages: messagesWithCache,
     });
 
     const reply = msg.content

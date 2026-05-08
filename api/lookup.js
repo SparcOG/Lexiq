@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     const msg = await client.messages.create({
       model: MODEL,
       max_tokens: 512,
-      system: SYSTEM_PROMPT,
+      system: [{ type: 'text', text: SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } }],
       messages: [{ role: 'user', content: `"${word}" — level: ${level}` }],
     });
 
