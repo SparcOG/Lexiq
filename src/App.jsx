@@ -175,7 +175,9 @@ export default function App() {
   const [error, setError] = useState(null);
   const [showRussian, setShowRussian] = useState(false);
   const [level, setLevel] = useState('medium');
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('lexiq:history') || '[]'); } catch { return []; }
+  });
 
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
@@ -220,8 +222,9 @@ export default function App() {
         examples: data.examples,
       });
       setHistory((h) => {
-        const f = h.filter((w) => w.toLowerCase() !== word.toLowerCase());
-        return [word, ...f].slice(0, 20);
+        const updated = [word, ...h.filter((w) => w.toLowerCase() !== word.toLowerCase())].slice(0, 20);
+        try { localStorage.setItem('lexiq:history', JSON.stringify(updated)); } catch {}
+        return updated;
       });
     } catch (err) {
       setError(err.message);
