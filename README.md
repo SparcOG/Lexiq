@@ -1,8 +1,8 @@
 # Lexiq
 
-English learning tool for Russian speakers. Look up any word or phrase and get a definition, IPA pronunciation, part of speech, and three examples — all with Russian translations. Powered by Claude AI.
+**[https://lexiq-seven.vercel.app](https://lexiq-seven.vercel.app)**
 
-**Live:** https://lexiq-seven.vercel.app
+English learning tool for Russian speakers. Look up any word or phrase and get a definition, IPA pronunciation, part of speech, and three examples — all with Russian translations. Powered by Claude AI.
 
 ## Features
 
