@@ -28,6 +28,36 @@ async function apiLookup(word, level) {
   return res.json();
 }
 
+function getUserId() {
+  let id = localStorage.getItem('lexiq:userId');
+  if (!id) { id = crypto.randomUUID(); localStorage.setItem('lexiq:userId', id); }
+  return id;
+}
+
+async function dbLoadHistory(userId) {
+  const r = await fetch(`/api/sync?action=load&userId=${userId}`);
+  if (!r.ok) return null;
+  const { words } = await r.json();
+  return words;
+}
+
+function dbSaveHistory(userId, words) {
+  fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'save-history', userId, words }) }).catch(() => {});
+}
+
+async function dbLoadChat(userId, word) {
+  const r = await fetch(`/api/sync?action=load-chat&userId=${userId}&word=${encodeURIComponent(word)}`);
+  if (!r.ok) return null;
+  const { messages } = await r.json();
+  return messages;
+}
+
+function dbSaveChat(userId, word, messages) {
+  fetch('/api/sync', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'save-chat', userId, word, messages }) }).catch(() => {});
+}
+
 const CHAT_KEY = (word) => `lexiq:chat:${word.toLowerCase()}`;
 const CHAT_CAP = 40;
 
@@ -168,6 +198,7 @@ const styles = {
 };
 
 export default function App() {
+  const [userId] = useState(getUserId);
   const [input, setInput] = useState('');
   const [wordData, setWordData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -189,6 +220,16 @@ export default function App() {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, chatLoading]);
 
+  // Load history from DB on mount; DB is source of truth across devices.
+  useEffect(() => {
+    dbLoadHistory(userId).then(words => {
+      if (words?.length) {
+        setHistory(words);
+        localStorage.setItem('lexiq:history', JSON.stringify(words));
+      }
+    }).catch(() => {});
+  }, [userId]);
+
   // Warm up speech voices on mount. Some browsers load them async,
   // so we trigger the load and listen for the voiceschanged event.
   useEffect(() => {
@@ -208,6 +249,9 @@ export default function App() {
     setError(null);
     setChatMessages(loadChat(word));
     setChatError(null);
+    dbLoadChat(userId, word).then(msgs => {
+      if (msgs?.length) { setChatMessages(msgs); saveChat(word, msgs); }
+    }).catch(() => {});
     try {
       const data = await apiLookup(word, lvl);
       setWordData({
@@ -224,6 +268,7 @@ export default function App() {
       setHistory((h) => {
         const updated = [word, ...h.filter((w) => w.toLowerCase() !== word.toLowerCase())].slice(0, 20);
         try { localStorage.setItem('lexiq:history', JSON.stringify(updated)); } catch {}
+        dbSaveHistory(userId, updated);
         return updated;
       });
     } catch (err) {
@@ -278,6 +323,7 @@ export default function App() {
       setChatMessages((prev) => {
         const updated = [...prev, { role: 'assistant', content: reply }];
         saveChat(wordData.word, updated);
+        dbSaveChat(userId, wordData.word, updated);
         return updated;
       });
     } catch (err) {
