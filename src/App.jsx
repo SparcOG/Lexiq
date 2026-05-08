@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Search, Volume2, History, Eye, EyeOff, Loader2, Sparkles,
-  BookOpen, AlertCircle,
+  BookOpen, Send, MessageCircle, AlertCircle,
 } from 'lucide-react';
 // -----------------------------------------------------------------------------
 // Lexiq — English learning tool
@@ -24,6 +24,19 @@ async function apiLookup(word, level) {
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || `Lookup failed (${res.status})`);
+  }
+  return res.json();
+}
+
+async function apiChat(word, messages) {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ word, messages }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Chat failed (${res.status})`);
   }
   return res.json();
 }
@@ -127,6 +140,13 @@ const styles = {
   exampleText: { flex: 1, lineHeight: 1.6, margin: 0 },
   exampleRu: { fontSize: 13, color: COLORS.textMuted, marginTop: 4, marginBottom: 0 },
   iconBtn: { background: 'transparent', border: 'none', color: COLORS.textMuted, padding: 6, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  chatSection: { borderTop: `1px solid ${COLORS.border}`, paddingTop: 32, marginTop: 32 },
+  chatHeader: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 },
+  msgRow: (user) => ({ display: 'flex', justifyContent: user ? 'flex-end' : 'flex-start', marginBottom: 12 }),
+  msgBubble: (user) => ({ maxWidth: '85%', padding: '10px 14px', borderRadius: 8, fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap', background: user ? COLORS.blueBg : COLORS.bgPanel, color: COLORS.text }),
+  chatForm: { display: 'flex', gap: 8, alignItems: 'center' },
+  chatInput: { flex: 1, background: COLORS.bgPanel, border: `1px solid ${COLORS.borderLight}`, borderRadius: 6, padding: '8px 12px', fontSize: 14, color: COLORS.text, outline: 'none' },
+  sendBtn: (disabled) => ({ padding: 8, borderRadius: 6, background: COLORS.blueBg, color: 'white', border: 'none', opacity: disabled ? 0.4 : 1, display: 'flex' }),
   errorBox: { display: 'flex', alignItems: 'flex-start', gap: 12, padding: 16, borderRadius: 6, background: 'rgba(127, 29, 29, 0.4)', border: '1px solid rgba(153, 27, 27, 0.6)', color: '#fca5a5', fontSize: 14, marginBottom: 24, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' },
   loadingRow: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0', color: COLORS.textMuted },
 };
@@ -140,6 +160,16 @@ export default function App() {
   const [showRussian, setShowRussian] = useState(false);
   const [level, setLevel] = useState('medium');
   const [history, setHistory] = useState([]);
+
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatError, setChatError] = useState(null);
+  const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages, chatLoading]);
 
   // Warm up speech voices on mount. Some browsers load them async,
   // so we trigger the load and listen for the voiceschanged event.
@@ -158,6 +188,8 @@ export default function App() {
   async function doLookup(word, lvl) {
     setLoading(true);
     setError(null);
+    setChatMessages([]);
+    setChatError(null);
     try {
       const data = await apiLookup(word, lvl);
       setWordData({
@@ -211,6 +243,25 @@ export default function App() {
   function onLevelChange(newLevel) {
     setLevel(newLevel);
     if (wordData && !wordData.levels[newLevel]) fetchLevel(newLevel);
+  }
+
+  async function sendChat(e) {
+    if (e) e.preventDefault();
+    const text = chatInput.trim();
+    if (!text || chatLoading || !wordData) return;
+    const newMessages = [...chatMessages, { role: 'user', content: text }];
+    setChatMessages(newMessages);
+    setChatInput('');
+    setChatLoading(true);
+    setChatError(null);
+    try {
+      const { reply } = await apiChat(wordData.word, newMessages);
+      setChatMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+    } catch (err) {
+      setChatError(err.message);
+    } finally {
+      setChatLoading(false);
+    }
   }
 
   const currentDefinition = wordData ? wordData.levels[level] : null;
@@ -341,6 +392,56 @@ export default function App() {
                   ))}
                 </section>
               )}
+
+              <section style={styles.chatSection}>
+                <div style={styles.chatHeader}>
+                  <MessageCircle size={16} color={COLORS.blue} />
+                  <h3 style={styles.sectionLabel}>Ask about this word</h3>
+                </div>
+
+                {chatMessages.length === 0 && !chatLoading && (
+                  <p style={{ fontSize: 14, color: COLORS.textMuted, fontStyle: 'italic', marginBottom: 16, lineHeight: 1.6 }}>
+                    Ask anything about <span style={{ color: COLORS.textDim }}>"{wordData.word}"</span>.
+                    Why it exists. How it connects to other ideas. Ask to translate a part if you want.
+                  </p>
+                )}
+
+                <div style={{ marginBottom: 16 }}>
+                  {chatMessages.map((m, i) => (
+                    <div key={i} style={styles.msgRow(m.role === 'user')}>
+                      <div style={styles.msgBubble(m.role === 'user')}>{m.content}</div>
+                    </div>
+                  ))}
+                  {chatLoading && (
+                    <div style={styles.msgRow(false)}>
+                      <div style={{ ...styles.msgBubble(false), color: COLORS.textMuted, display: 'flex', alignItems: 'center' }}>
+                        <Loader2 size={14} style={{ animation: 'spin 1s linear infinite', marginRight: 8 }} />
+                        Thinking...
+                      </div>
+                    </div>
+                  )}
+                  {chatError && (
+                    <div style={{ ...styles.errorBox, marginBottom: 0 }}>
+                      <AlertCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} />
+                      <span>{chatError}</span>
+                    </div>
+                  )}
+                  <div ref={chatEndRef} />
+                </div>
+
+                <form onSubmit={sendChat} style={styles.chatForm}>
+                  <input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder={`Ask about "${wordData.word}"...`}
+                    disabled={chatLoading}
+                    style={styles.chatInput}
+                  />
+                  <button type="submit" disabled={chatLoading || !chatInput.trim()} style={styles.sendBtn(chatLoading || !chatInput.trim())} title="Send">
+                    <Send size={16} />
+                  </button>
+                </form>
+              </section>
 
             </article>
           )}
