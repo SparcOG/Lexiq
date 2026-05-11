@@ -4,6 +4,7 @@ import {
   BookOpen, Send, MessageCircle, AlertCircle,
 } from 'lucide-react';
 import { supabase } from './supabase.js';
+import SentenceBreakdown from './SentenceBreakdown.jsx';
 // -----------------------------------------------------------------------------
 // Lexiq — English learning tool
 // Uses Haiku for everything (cheap). Real API via /api/lookup and /api/chat.
@@ -72,6 +73,19 @@ function saveChat(word, messages) {
   try {
     localStorage.setItem(CHAT_KEY(word), JSON.stringify(messages.slice(-CHAT_CAP)));
   } catch {}
+}
+
+async function apiBreakdown(sentence) {
+  const res = await fetch('/api/breakdown', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sentence }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || `Breakdown failed (${res.status})`);
+  }
+  return res.json();
 }
 
 async function apiChat(word, messages) {
@@ -216,6 +230,8 @@ export default function App() {
     try { return JSON.parse(localStorage.getItem('lexiq:history') || '[]'); } catch { return []; }
   });
 
+  const [sentenceData, setSentenceData] = useState(null);
+
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
@@ -262,9 +278,25 @@ export default function App() {
     return () => window.speechSynthesis.removeEventListener('voiceschanged', handler);
   }, []);
 
+  async function doBreakdown(sentence) {
+    setLoading(true);
+    setError(null);
+    setWordData(null);
+    setSentenceData(null);
+    try {
+      const data = await apiBreakdown(sentence);
+      setSentenceData(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function doLookup(word, lvl) {
     setLoading(true);
     setError(null);
+    setSentenceData(null);
     setChatMessages(loadChat(word));
     setChatError(null);
     dbLoadChat(session.access_token, word).then(msgs => {
@@ -314,7 +346,8 @@ export default function App() {
     if (e) e.preventDefault();
     const w = input.trim();
     if (!w || loading) return;
-    doLookup(w, level);
+    if (w.includes(' ')) doBreakdown(w);
+    else doLookup(w, level);
   }
 
   function pickFromHistory(w) {
@@ -471,7 +504,7 @@ export default function App() {
             </div>
           )}
 
-          {!loading && !wordData && !error && (
+          {!loading && !wordData && !sentenceData && !error && (
             <div style={styles.empty}>
               <BookOpen size={40} color={COLORS.textFaint} style={{ marginBottom: 16 }} />
               <h2 style={{ fontSize: 20, color: COLORS.textDim, margin: '0 0 4px' }}>Start learning</h2>
@@ -480,6 +513,10 @@ export default function App() {
                 give examples, and read it out loud.
               </p>
             </div>
+          )}
+
+          {!loading && sentenceData && (
+            <SentenceBreakdown data={sentenceData} sentence={input.trim()} />
           )}
 
           {!loading && wordData && (
