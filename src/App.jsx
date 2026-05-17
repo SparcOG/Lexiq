@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Search, Volume2, History, Eye, EyeOff, Loader2, Sparkles,
-  BookOpen, Send, MessageCircle, AlertCircle,
+  Send, MessageCircle, AlertCircle,
 } from 'lucide-react';
 import { supabase } from './supabase.js';
 import SentenceBreakdown from './SentenceBreakdown.jsx';
@@ -157,60 +157,6 @@ function speak(text) {
   synth.speak(utter);
 }
 
-const COLORS = {
-  bg: '#171717',
-  bgDark: '#0a0a0a',
-  bgPanel: '#262626',
-  bgPanel2: '#404040',
-  border: '#262626',
-  borderLight: '#404040',
-  text: '#f5f5f5',
-  textDim: '#a3a3a3',
-  textMuted: '#737373',
-  textFaint: '#525252',
-  blue: '#60a5fa',
-  blueBg: '#2563eb',
-};
-
-const styles = {
-  app: { minHeight: '100vh', background: COLORS.bg, color: COLORS.text, display: 'flex' },
-  sidebar: { width: 220, background: COLORS.bgDark, borderRight: `1px solid ${COLORS.border}`, padding: 12 },
-  sidebarLabel: { display: 'flex', alignItems: 'center', gap: 6, color: COLORS.textMuted, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 12, padding: '0 8px' },
-  histItem: (active) => ({ display: 'block', width: '100%', textAlign: 'left', padding: '6px 8px', borderRadius: 4, fontSize: 14, background: active ? COLORS.bgPanel : 'transparent', color: active ? COLORS.text : COLORS.textDim, border: 'none', marginBottom: 2 }),
-  main: { flex: 1, display: 'flex', flexDirection: 'column' },
-  topbar: { borderBottom: `1px solid ${COLORS.border}`, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 },
-  brand: { display: 'flex', alignItems: 'center', gap: 8 },
-  brandTitle: { fontSize: 18, fontWeight: 600, margin: 0 },
-  searchWrap: { position: 'relative', flex: 1, maxWidth: 420 },
-  searchIcon: { position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: COLORS.textFaint },
-  searchInput: { width: '100%', background: COLORS.bgPanel, border: `1px solid ${COLORS.borderLight}`, borderRadius: 6, padding: '8px 12px 8px 36px', fontSize: 14, color: COLORS.text, outline: 'none' },
-  ruBtn: { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, padding: '6px 12px', borderRadius: 6, background: COLORS.bgPanel, color: COLORS.textDim, border: 'none' },
-  content: { flex: 1, padding: 24, overflowY: 'auto' },
-  empty: { display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '80px 0' },
-  article: { maxWidth: 720, margin: '0 auto' },
-  word: { fontSize: 36, fontWeight: 600, margin: 0, letterSpacing: '-0.02em' },
-  meta: { display: 'flex', alignItems: 'center', gap: 12, color: COLORS.textMuted, fontSize: 13, marginBottom: 24, marginTop: 4 },
-  levelTabs: { display: 'inline-flex', background: COLORS.bgPanel, borderRadius: 8, padding: 4, marginBottom: 20 },
-  levelBtn: (active) => ({ padding: '6px 14px', fontSize: 14, borderRadius: 6, background: active ? COLORS.bgPanel2 : 'transparent', color: active ? COLORS.text : COLORS.textDim, border: 'none' }),
-  sectionLabel: { fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: COLORS.textMuted, marginBottom: 8 },
-  defText: { fontSize: 17, lineHeight: 1.6, margin: 0 },
-  defRu: { marginTop: 12, fontSize: 13, color: COLORS.textDim, lineHeight: 1.6, borderLeft: `2px solid ${COLORS.border}`, paddingLeft: 12 },
-  exampleItem: { borderLeft: `2px solid ${COLORS.border}`, paddingLeft: 16, paddingTop: 4, paddingBottom: 4, marginBottom: 12 },
-  exampleRow: { display: 'flex', alignItems: 'flex-start', gap: 8 },
-  exampleText: { flex: 1, lineHeight: 1.6, margin: 0 },
-  exampleRu: { fontSize: 13, color: COLORS.textMuted, marginTop: 4, marginBottom: 0 },
-  iconBtn: { background: 'transparent', border: 'none', color: COLORS.textMuted, padding: 6, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  chatSection: { borderTop: `1px solid ${COLORS.border}`, paddingTop: 32, marginTop: 32 },
-  chatHeader: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 },
-  msgRow: (user) => ({ display: 'flex', justifyContent: user ? 'flex-end' : 'flex-start', marginBottom: 12 }),
-  msgBubble: (user) => ({ maxWidth: '85%', padding: '10px 14px', borderRadius: 8, fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap', background: user ? COLORS.blueBg : COLORS.bgPanel, color: COLORS.text }),
-  chatForm: { display: 'flex', gap: 8, alignItems: 'center' },
-  chatInput: { flex: 1, background: COLORS.bgPanel, border: `1px solid ${COLORS.borderLight}`, borderRadius: 6, padding: '8px 12px', fontSize: 14, color: COLORS.text, outline: 'none' },
-  sendBtn: (disabled) => ({ padding: 8, borderRadius: 6, background: COLORS.blueBg, color: 'white', border: 'none', opacity: disabled ? 0.4 : 1, display: 'flex' }),
-  errorBox: { display: 'flex', alignItems: 'flex-start', gap: 12, padding: 16, borderRadius: 6, background: 'rgba(127, 29, 29, 0.4)', border: '1px solid rgba(153, 27, 27, 0.6)', color: '#fca5a5', fontSize: 14, marginBottom: 24, maxWidth: 720, marginLeft: 'auto', marginRight: 'auto' },
-  loadingRow: { display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 0', color: COLORS.textMuted },
-};
-
 export default function App() {
   const [session, setSession] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -236,7 +182,24 @@ export default function App() {
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [chatError, setChatError] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('theme') || 'light';
+    } catch {
+      return 'light';
+    }
+  });
   const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('theme', theme);
+    } catch {}
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.content = theme === 'dark' ? '#1a1a1a' : '#f5f5f5';
+  }, [theme]);
 
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -352,6 +315,7 @@ export default function App() {
 
   function pickFromHistory(w) {
     setInput(w);
+    setSidebarOpen(false);
     doLookup(w, level);
   }
 
@@ -385,6 +349,7 @@ export default function App() {
   }
 
   const currentDefinition = wordData ? wordData.levels[level] : null;
+  const showCompactSearch = Boolean(wordData || sentenceData || loading);
 
   async function sendMagicLink(e) {
     e.preventDefault();
@@ -399,120 +364,179 @@ export default function App() {
     setAuthSubmitting(false);
   }
 
-  if (authLoading) return (
-    <div style={{ minHeight: '100vh', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Loader2 size={24} color={COLORS.textMuted} style={{ animation: 'spin 1s linear infinite' }} />
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-
-  if (!session) return (
-    <div style={{ minHeight: '100vh', background: COLORS.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: 360, padding: 40, background: COLORS.bgPanel, borderRadius: 12, border: `1px solid ${COLORS.border}` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-          <Sparkles size={22} color={COLORS.blue} />
-          <h1 style={{ fontSize: 22, fontWeight: 600, margin: 0 }}>Lexiq</h1>
-        </div>
-        <p style={{ color: COLORS.textMuted, fontSize: 13, marginBottom: 28 }}>English learning tool</p>
-        {authSent ? (
-          <p style={{ color: COLORS.textDim, lineHeight: 1.7, fontSize: 14 }}>
-            Check your email — we sent a sign-in link to{' '}
-            <strong style={{ color: COLORS.text }}>{authEmail}</strong>.
-          </p>
-        ) : (
-          <form onSubmit={sendMagicLink}>
-            <p style={{ color: COLORS.textMuted, fontSize: 14, marginBottom: 16, lineHeight: 1.6 }}>
-              Sign in to sync your learning across devices.
-            </p>
-            <input
-              type="email"
-              value={authEmail}
-              onChange={e => setAuthEmail(e.target.value)}
-              placeholder="your@email.com"
-              required
-              style={{ ...styles.searchInput, display: 'block', width: '100%', marginBottom: 10, padding: '10px 14px', boxSizing: 'border-box' }}
-            />
-            {authError && <p style={{ color: '#fca5a5', fontSize: 13, marginBottom: 10 }}>{authError}</p>}
-            <button type="submit" disabled={authSubmitting} style={{ width: '100%', padding: '10px', background: COLORS.blueBg, color: '#fff', border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 500, cursor: 'pointer', opacity: authSubmitting ? 0.6 : 1 }}>
-              {authSubmitting ? 'Sending…' : 'Send magic link'}
-            </button>
-          </form>
-        )}
+  if (authLoading) {
+    return (
+      <div className="page-center">
+        <Loader2 size={24} className="loading-spinner" aria-hidden />
       </div>
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="auth-page">
+        <div className="auth-card slide-up">
+          <div className="auth-brand">
+            <Sparkles size={22} className="brand__icon" aria-hidden />
+            <h1>Lexiq</h1>
+          </div>
+          <p className="auth-tagline">English learning tool</p>
+          {authSent ? (
+            <p className="auth-message">
+              Check your email — we sent a sign-in link to{' '}
+              <strong>{authEmail}</strong>.
+            </p>
+          ) : (
+            <form onSubmit={sendMagicLink}>
+              <p className="auth-form-text">
+                Sign in to sync your learning across devices.
+              </p>
+              <input
+                type="email"
+                className="auth-input"
+                value={authEmail}
+                onChange={e => setAuthEmail(e.target.value)}
+                placeholder="your@email.com"
+                required
+              />
+              {authError && <p className="auth-error">{authError}</p>}
+              <button type="submit" className="auth-submit" disabled={authSubmitting}>
+                {authSubmitting ? 'Sending…' : 'Send magic link'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div style={styles.app}>
-      <aside style={styles.sidebar}>
-        <div style={styles.sidebarLabel}>
-          <History size={14} /> History
+    <div className="app">
+      <header className="app-header">
+        <div className="brand">
+          <Sparkles size={20} className="brand__icon" aria-hidden />
+          <h1 className="brand__title">Lexiq</h1>
         </div>
-        {history.length === 0 ? (
-          <p style={{ color: COLORS.textFaint, fontSize: 12, padding: '0 8px', lineHeight: 1.5 }}>
-            No words yet.
-          </p>
-        ) : (
-          history.map((w, i) => (
-            <button key={i} onClick={() => pickFromHistory(w)} style={styles.histItem(wordData?.word === w)}>
-              {w}
-            </button>
-          ))
-        )}
-      </aside>
 
-      <main style={styles.main}>
-        <header style={styles.topbar}>
-          <div style={styles.brand}>
-            <Sparkles size={20} color={COLORS.blue} />
-            <h1 style={styles.brandTitle}>Lexiq</h1>
-          </div>
-          <form onSubmit={handleSearch} style={styles.searchWrap}>
-            <Search size={16} style={styles.searchIcon} />
+        {showCompactSearch && (
+          <form onSubmit={handleSearch} className="search-bar">
+            <Search size={16} className="search-bar__icon" aria-hidden />
             <input
+              className="search-bar__input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type a word or sentence..."
               disabled={loading}
-              style={styles.searchInput}
             />
           </form>
-          <button onClick={() => setShowRussian((v) => !v)} style={styles.ruBtn} title={showRussian ? 'Hide Russian' : 'Show Russian'}>
+        )}
+
+        <div className="header-actions">
+          <button
+            type="button"
+            className="btn-icon btn-history"
+            onClick={() => setSidebarOpen((v) => !v)}
+            aria-expanded={sidebarOpen}
+            aria-controls="history-sidebar"
+          >
+            <History size={14} aria-hidden />
+            History
+          </button>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => setTheme((t) => (t === 'light' ? 'dark' : 'light'))}
+            title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={() => setShowRussian((v) => !v)}
+            title={showRussian ? 'Hide Russian' : 'Show Russian'}
+          >
             {showRussian ? <EyeOff size={14} /> : <Eye size={14} />} RU
           </button>
-          <button onClick={() => supabase.auth.signOut()} style={{ ...styles.ruBtn, color: COLORS.textFaint }} title={session.user.email}>
+          <button
+            type="button"
+            className="btn-ghost btn-ghost--faint"
+            onClick={() => supabase.auth.signOut()}
+            title={session.user.email}
+          >
             Sign out
           </button>
-        </header>
+        </div>
+      </header>
 
-        <div style={styles.content}>
+      <div className="app-body">
+        <button
+          type="button"
+          className={`sidebar-backdrop${sidebarOpen ? ' open' : ''}`}
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden={!sidebarOpen}
+          tabIndex={sidebarOpen ? 0 : -1}
+        />
+        <aside
+          id="history-sidebar"
+          className={`app-sidebar${sidebarOpen ? ' open' : ''}`}
+        >
+          <div className="sidebar-label">
+            <History size={14} aria-hidden /> History
+          </div>
+          {history.length === 0 ? (
+            <p className="sidebar-empty">No words yet.</p>
+          ) : (
+            history.map((w, i) => (
+              <button
+                key={i}
+                type="button"
+                className={`hist-item${wordData?.word === w ? ' hist-item--active' : ''}`}
+                onClick={() => pickFromHistory(w)}
+              >
+                {w}
+              </button>
+            ))
+          )}
+        </aside>
+
+        <main className="app-main">
           {loading && (
-            <div style={styles.loadingRow}>
-              <Loader2 size={20} style={{ animation: 'spin 1s linear infinite', marginRight: 8 }} />
+            <div className="loading-row fade-in">
+              <Loader2 size={20} className="loading-spinner" aria-hidden />
               Looking up...
             </div>
           )}
 
           {error && !loading && (
-            <div style={styles.errorBox}>
-              <AlertCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} />
+            <div className="error-banner error-banner--page slide-up" role="alert">
+              <AlertCircle size={16} aria-hidden />
               <div>
-                <div style={{ fontWeight: 500, marginBottom: 4 }}>Something went wrong</div>
-                <div style={{ color: '#fca5a5', opacity: 0.8 }}>{error}</div>
+                <div className="error-banner__title">Something went wrong</div>
+                <div className="error-banner__detail">{error}</div>
               </div>
             </div>
           )}
 
           {!loading && !wordData && !sentenceData && !error && (
-            <div style={styles.empty}>
-              <BookOpen size={40} color={COLORS.textFaint} style={{ marginBottom: 16 }} />
-              <h2 style={{ fontSize: 20, color: COLORS.textDim, margin: '0 0 4px' }}>Start learning</h2>
-              <p style={{ fontSize: 14, color: COLORS.textMuted, maxWidth: 380, lineHeight: 1.6 }}>
+            <section className="search-hero fade-in">
+              <h2 className="search-hero__title">Start learning</h2>
+              <p className="search-hero__subtitle">
                 Type any English word or short sentence. Lexiq will explain it,
                 give examples, and read it out loud.
               </p>
-            </div>
+              <form onSubmit={handleSearch} className="search-hero__form">
+                <Search size={20} className="search-hero__icon" aria-hidden />
+                <input
+                  className="search-hero__input"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Type a word or sentence..."
+                  disabled={loading}
+                />
+              </form>
+            </section>
           )}
 
           {!loading && sentenceData && (
@@ -520,119 +544,144 @@ export default function App() {
           )}
 
           {!loading && wordData && (
-            <article style={styles.article}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-                <h2 style={styles.word}>{wordData.word}</h2>
-                <button onClick={() => speak(wordData.word)} style={styles.iconBtn} title="Hear pronunciation">
+            <article key={wordData.word} className="card fade-in">
+              <div className="word-header">
+                <h2 className="word-title">{wordData.word}</h2>
+                <button
+                  type="button"
+                  className="audio-btn"
+                  onClick={() => speak(wordData.word)}
+                  title="Hear pronunciation"
+                >
                   <Volume2 size={20} />
                 </button>
               </div>
-              <div style={styles.meta}>
+              <div className="word-meta">
                 {wordData.pronunciation && <span>{wordData.pronunciation}</span>}
                 {wordData.partOfSpeech && (
                   <>
-                    <span style={{ color: COLORS.textFaint }}>·</span>
-                    <span style={{ fontStyle: 'italic' }}>{wordData.partOfSpeech}</span>
+                    <span className="word-meta__sep">·</span>
+                    <span className="word-meta__pos">{wordData.partOfSpeech}</span>
                   </>
                 )}
               </div>
 
-              <div style={styles.levelTabs}>
+              <div className="level-tabs">
                 {LEVELS.map((l) => (
-                  <button key={l.id} onClick={() => onLevelChange(l.id)} style={styles.levelBtn(level === l.id)}>
+                  <button
+                    key={l.id}
+                    type="button"
+                    className={level === l.id ? 'active' : undefined}
+                    onClick={() => onLevelChange(l.id)}
+                  >
                     {l.label}
                   </button>
                 ))}
               </div>
 
-              <section style={{ marginBottom: 32, minHeight: 60 }}>
-                <h3 style={styles.sectionLabel}>Definition</h3>
+              <section className="section-block">
+                <h3 className="section-label">Definition</h3>
                 {levelLoading && !currentDefinition ? (
-                  <div style={{ display: 'flex', alignItems: 'center', color: COLORS.textMuted, fontSize: 14, padding: '8px 0' }}>
-                    <Loader2 size={16} style={{ animation: 'spin 1s linear infinite', marginRight: 8 }} />
+                  <div className="loading-inline">
+                    <Loader2 size={16} className="loading-spinner" aria-hidden />
                     Loading {level}...
                   </div>
                 ) : currentDefinition ? (
                   <>
-                    <p style={styles.defText}>{currentDefinition.en}</p>
-                    {showRussian && currentDefinition.ru && <p style={styles.defRu}>{currentDefinition.ru}</p>}
+                    <p className="def-text">{currentDefinition.en}</p>
+                    {showRussian && currentDefinition.ru && (
+                      <p className="def-ru">{currentDefinition.ru}</p>
+                    )}
                   </>
                 ) : null}
               </section>
 
               {wordData.examples?.length > 0 && (
-                <section style={{ marginBottom: 40 }}>
-                  <h3 style={styles.sectionLabel}>Examples</h3>
+                <section className="examples-section">
+                  <h3 className="section-label">Examples</h3>
                   {wordData.examples.map((ex, i) => (
-                    <div key={i} style={styles.exampleItem}>
-                      <div style={styles.exampleRow}>
-                        <p style={styles.exampleText}>{ex.en}</p>
-                        <button onClick={() => speak(ex.en)} style={styles.iconBtn} title="Hear">
+                    <div key={i}>
+                      <div className="example-row">
+                        <p className="example-text">{ex.en}</p>
+                        <button
+                          type="button"
+                          className="audio-btn"
+                          onClick={() => speak(ex.en)}
+                          title="Hear"
+                        >
                           <Volume2 size={16} />
                         </button>
                       </div>
-                      {showRussian && ex.ru && <p style={styles.exampleRu}>{ex.ru}</p>}
+                      {showRussian && ex.ru && <p className="example-ru">{ex.ru}</p>}
                     </div>
                   ))}
                 </section>
               )}
 
-              <section style={styles.chatSection}>
-                <div style={styles.chatHeader}>
-                  <MessageCircle size={16} color={COLORS.blue} />
-                  <h3 style={styles.sectionLabel}>Ask about this word</h3>
+              <section className="chat-panel">
+                <div className="chat-header">
+                  <MessageCircle size={16} className="icon-accent" aria-hidden />
+                  <h3 className="section-label">Ask about this word</h3>
                 </div>
 
                 {chatMessages.length === 0 && !chatLoading && (
-                  <p style={{ fontSize: 14, color: COLORS.textMuted, fontStyle: 'italic', marginBottom: 16, lineHeight: 1.6 }}>
-                    Ask anything about <span style={{ color: COLORS.textDim }}>"{wordData.word}"</span>.
+                  <p className="chat-hint">
+                    Ask anything about <em>&quot;{wordData.word}&quot;</em>.
                     Why it exists. How it connects to other ideas. Ask to translate a part if you want.
                   </p>
                 )}
 
-                <div style={{ marginBottom: 16 }}>
+                <div className="chat-messages">
                   {chatMessages.map((m, i) => (
-                    <div key={i} style={styles.msgRow(m.role === 'user')}>
-                      <div style={styles.msgBubble(m.role === 'user')}>{m.content}</div>
+                    <div key={i} className="msg-row">
+                      <div
+                        className={`chat-bubble ${m.role === 'user' ? 'user' : 'assistant'}`}
+                      >
+                        {m.content}
+                      </div>
                     </div>
                   ))}
                   {chatLoading && (
-                    <div style={styles.msgRow(false)}>
-                      <div style={{ ...styles.msgBubble(false), color: COLORS.textMuted, display: 'flex', alignItems: 'center' }}>
-                        <Loader2 size={14} style={{ animation: 'spin 1s linear infinite', marginRight: 8 }} />
+                    <div className="msg-row">
+                      <div className="chat-bubble assistant thinking">
+                        <Loader2 size={14} className="loading-spinner" aria-hidden />
                         Thinking...
                       </div>
                     </div>
                   )}
                   {chatError && (
-                    <div style={{ ...styles.errorBox, marginBottom: 0 }}>
-                      <AlertCircle size={16} style={{ marginTop: 2, flexShrink: 0 }} />
-                      <span>{chatError}</span>
+                    <div className="msg-row">
+                      <div className="error-banner" role="alert">
+                        <AlertCircle size={16} aria-hidden />
+                        <span>{chatError}</span>
+                      </div>
                     </div>
                   )}
                   <div ref={chatEndRef} />
                 </div>
 
-                <form onSubmit={sendChat} style={styles.chatForm}>
+                <form onSubmit={sendChat} className="chat-form">
                   <input
+                    className="chat-input"
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder={`Ask about "${wordData.word}"...`}
                     disabled={chatLoading}
-                    style={styles.chatInput}
                   />
-                  <button type="submit" disabled={chatLoading || !chatInput.trim()} style={styles.sendBtn(chatLoading || !chatInput.trim())} title="Send">
+                  <button
+                    type="submit"
+                    className="send-btn"
+                    disabled={chatLoading || !chatInput.trim()}
+                    title="Send"
+                  >
                     <Send size={16} />
                   </button>
                 </form>
               </section>
-
             </article>
           )}
-        </div>
-      </main>
-
-      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+        </main>
+      </div>
     </div>
   );
 }

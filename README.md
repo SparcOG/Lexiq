@@ -1,28 +1,30 @@
 # Lexiq
 
-**[https://lexiq-seven.vercel.app](https://lexiq-seven.vercel.app)**
+**Live:** [https://lexiq-seven.vercel.app](https://lexiq-seven.vercel.app)
 
-English learning tool for Russian speakers. Look up any word or phrase and get a definition, IPA pronunciation, part of speech, and three examples — all with Russian translations. Powered by Claude AI.
+English learning tool for Russian speakers. Look up a word or phrase and get a definition, IPA, part of speech, and three examples — with optional Russian translations. Powered by Claude.
 
 ## Features
 
-- **3 depth levels** — Simple (A2), Medium, Deep (with etymology and connections to physics/neuroscience/AI)
-- **Russian translations** — toggle on/off for definitions and examples
-- **Audio** — hear any word or example sentence via browser speech synthesis
-- **Search history** — sidebar keeps your last 20 lookups
+- **Depth levels** — Simple (A2), Medium, Deep (etymology and ties to physics, neuroscience, AI)
+- **Russian** — Toggle translations for definitions and examples
+- **Audio** — Speech synthesis for words and example sentences
+- **History** — Sidebar keeps your last 20 lookups
 
 ## Stack
 
-- React + Vite (frontend)
-- Vercel serverless functions (backend)
-- Claude Haiku via Anthropic SDK (AI)
+- **Frontend:** React + Vite  
+- **Backend:** Vercel serverless functions  
+- **AI:** Claude Haiku via Anthropic SDK
 
 ## Local development
 
-```bash
-cp .env.example .env   # add your ANTHROPIC_API_KEY
-npx vercel dev         # runs frontend + API routes together
-```
+1. `cp .env.example .env` and set `ANTHROPIC_API_KEY` (see below).
+2. Run app and API together:
+
+   ```bash
+   npx vercel dev
+   ```
 
 ## Deploy
 
@@ -33,5 +35,5 @@ npx vercel deploy --prod
 ## Environment variables
 
 | Variable | Description |
-|---|---|
+|----------|-------------|
 | `ANTHROPIC_API_KEY` | Your Anthropic API key |
